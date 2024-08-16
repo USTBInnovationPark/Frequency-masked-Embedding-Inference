@@ -1,3 +1,7 @@
+
+# Notice!
+**This repository has been uploaded to our team's private GitHub repository and is timestamped as proof. It is provided solely for AAAI-25 reviewers to view and debug. Any other use is prohibited. Our team reserves all rights to the code and related work until it is publicly published and open-sourced.**
+
 # **Frequency-Masked Embedding Inference: A Non-Contrastive Approach for Time Series Representation Learning**
 This repository contains the official code for Frequency-masked Embedding Inference (FEI). 
 This version corresponds to the initial submission of the paper to AAAI-2025.

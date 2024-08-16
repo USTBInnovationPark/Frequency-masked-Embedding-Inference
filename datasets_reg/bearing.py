@@ -195,7 +195,7 @@ class XJTU(Dataset):
         self.threads = []
         self.raw_data = []
         self.labels = []
-        # 用于记录每个独立的轴承在raw_data整体样本中的开始与结束下标，采样时即可通过该数组得知所采样本的来源轴承
+
         self.bearing_split_index = []
 
         for con in range(len(condition)):
@@ -304,53 +304,3 @@ class XJTUScaler:
             dataset.raw_data = (dataset.raw_data - data_min) / (data_max - data_min)
         else:
             dataset.raw_data = (dataset.raw_data - self.data_min) / (self.data_max - self.data_min)
-
-
-if __name__ == '__main__':
-    op = Condition.OP_A
-    conditions = [op]
-    train_bearings = [[1]]
-    train_start = [[1]]
-    train_end = [[-1]]
-    val_conditions = [op]
-    val_bearings = [[2]]
-    val_start = [[1]]
-    val_end = [[-1]]
-    test_conditions = [op]
-    test_bearings = [[3, 4, 5]]
-    test_start = [[1, 1, 1]]
-    test_end = [[-1, -1, -1]]
-    window_size, step_size = 8192, 8192
-    train_set = XJTU(DEFAULT_ROOT, conditions, train_bearings, train_start, train_end, LabelsType.TYPE_P,
-                     window_size=window_size, step_size=81920)
-    val_set = XJTU(DEFAULT_ROOT, val_conditions, val_bearings, val_start, val_end, LabelsType.TYPE_P,
-                   window_size=window_size, step_size=step_size)
-    test_set = XJTU(DEFAULT_ROOT, test_conditions, test_bearings, test_start, test_end, LabelsType.TYPE_P,
-                    window_size=window_size, step_size=step_size)
-    # data = []
-    # labels = []
-    # for i in range(len(train_set)):
-    #     data.append(train_set[i][0])
-    #     labels.append(train_set[i][1])
-    # data = np.stack(data, axis=0)[..., :1].transpose((0, 2, 1))
-    # labels = np.concatenate(labels)
-    # data = {"samples": torch.FloatTensor(data), "labels": torch.FloatTensor(labels)}
-    # torch.save(data, "/home/fuen/DeepLearningProjects/TimeSeriesProject/datasets_reg/OPA/train.pt")
-    # data = []
-    # labels = []
-    # for i in range(len(val_set)):
-    #     data.append(val_set[i][0])
-    #     labels.append(val_set[i][1])
-    # data = np.stack(data, axis=0)[..., :1].transpose((0, 2, 1))
-    # labels = np.concatenate(labels)
-    # data = {"samples": torch.FloatTensor(data), "labels": torch.FloatTensor(labels)}
-    # torch.save(data, "/home/fuen/DeepLearningProjects/TimeSeriesProject/datasets_reg/OPA/val.pt")
-    # data = []
-    # labels = []
-    # for i in range(len(test_set)):
-    #     data.append(test_set[i][0])
-    #     labels.append(test_set[i][1])
-    # data = np.stack(data, axis=0)[..., :1].transpose((0, 2, 1))
-    # labels = np.concatenate(labels)
-    # data = {"samples": torch.FloatTensor(data), "labels": torch.FloatTensor(labels)}
-    # torch.save(data, "/home/fuen/DeepLearningProjects/TimeSeriesProject/datasets_reg/OPA/test.pt")

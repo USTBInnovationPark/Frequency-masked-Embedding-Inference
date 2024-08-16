@@ -270,9 +270,6 @@ class TrainableModule(nn.Module):
         return c_lr
 
     def test_model(self):
-        """
-        TODO: 修改结果切割保存的逻辑，目前的逻辑过于简陋，最好通过设备物理内存进行判断，决定切割大小
-        """
         if self.test_loader is None:
             self.logger.warning("The test_loader is None! test_model() will not be processed.")
             return
@@ -290,9 +287,6 @@ class TrainableModule(nn.Module):
                 y = y.detach().cpu()
                 output = torch.cat([output, model_out], dim=0) if output is not None else model_out
                 labels = torch.cat([labels, y], dim=0) if labels is not None else y
-                """
-                此处进行预测结果和label的切割保存。为了节约加载时的内存占用，必须将结果切割成多个部分分别保存
-                """
                 if output.numel() >= 40000000:  # result cut
                     np.save(join(self.model_path, "model_test_output_part{}".format(index)),
                             output.cpu().detach().numpy())
@@ -490,9 +484,3 @@ class TrainableModule(nn.Module):
         A callback function called after testing process finished.
         """
         return
-
-
-if __name__ == '__main__':
-    from joint_embedding.configs_old import default_config
-
-    model = TrainableModule(default_config)

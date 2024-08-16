@@ -150,7 +150,7 @@ def fine_tune_UCR(pretrain_config: PretrainConfig or str,
                   fine_tune_config: FineTuneConfig or str,
                   model: PretrainModel or str or None,
                   target):
-    datafiles = os.listdir("/home/fuen/DeepLearningProjects/TimesURL/src/datasets/UCR")
+    datafiles = os.listdir("./UCR")
     datafiles.sort()
     if target == "TimeDRL":
         datafiles.remove("SmoothSubspace")

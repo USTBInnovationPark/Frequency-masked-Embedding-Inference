@@ -42,8 +42,8 @@ class DefaultGenerator(Dataset):
 
 
 def load_UCR(data_name: str):
-    train_file = os.path.join('/home/fuen/DeepLearningProjects/TimesURL/src/datasets/UCR', data_name, data_name + "_TRAIN.tsv")
-    test_file = os.path.join('/home/fuen/DeepLearningProjects/TimesURL/src/datasets/UCR', data_name, data_name + "_TEST.tsv")
+    train_file = os.path.join("./"+data_name, data_name + "_TRAIN.tsv")
+    test_file = os.path.join("./"+data_name, data_name + "_TEST.tsv")
     train_df = pd.read_csv(train_file, sep='\t', header=None)
     test_df = pd.read_csv(test_file, sep='\t', header=None)
     train_array = np.array(train_df)
@@ -134,10 +134,4 @@ def _center_vary_length_series(x):
 def _set_nan2zero(x):
     x[np.isnan(x)] = 0
     return x
-
-
-if __name__ == '__main__':
-    files = os.listdir("/home/fuen/DeepLearningProjects/TimesURL/src/datasets/UCR")
-    data = load_UCR("AllGestureWiimoteX")
-
 
