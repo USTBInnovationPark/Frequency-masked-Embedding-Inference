@@ -1,14 +1,16 @@
-该仓库为Frequency-masked Embedding Inference(FEI)的官方代码库，该版本为最初提交于AAAI-2025的论文对应代码
+# **Frequency-Masked Embedding Inference: A Non-Contrastive Approach for Time Series Representation Learning**
+This repository contains the official code for Frequency-masked Embedding Inference (FEI). 
+This version corresponds to the initial submission of the paper to AAAI-2025.
 
 # Repository Structure
 ```
-- config/                所有模型与训练的配置
-- datasets_clsa/         分类数据集构建
-- datasets_reg/          回归数据集构建
-- models/                包含Baseline实现与FEI架构代码
-- train/                 所有训练代码的基类，以及训练日志和结果的保存
-- util/                  所有的工具方法，包含了FEI的频率遮罩代码
-- experiments.py         训练和测试的运行入口
+- config/                All model and training configurations
+- datasets_clsa/         Classification dataset construction
+- datasets_reg/          Regression dataset construction
+- models/                Contains Baseline implementations and FEI architecture code
+- train/                 Base class for all training code, as well as saving training logs and results
+- util/                  All utility methods, including the frequency masking code for FEI
+- experiments.py         Entry point for running training and testing
 ```
 
 # Requirements
@@ -23,9 +25,9 @@ pandas~=2.0.3
 
 # Preparing Datasets
 ## Classification Datasets
-所有的分类数据集格式应符合train.pt/test.pt/val.pt的结构，pt文件内包含键为"samples","labels"以及值为对应的样本和标签数据的字典键值对，详细见TF-C的数据集结构。
+All classification datasets should follow the structure of train.pt/test.pt/val.pt, where each .pt file contains a dictionary with keys "samples" and "labels," corresponding to the sample and label data. See the TF-C dataset structure for details.
 
-数据集下载后应放入datasets_clsa文件夹，以Gesture数据集为例，正确目录结构应该如下：
+After downloading, place the datasets in the datasets_clsa folder. For example, the correct directory structure for the Gesture dataset should be as follows:
 ```
 - datasets_clsa
   - Gesture
@@ -35,7 +37,7 @@ pandas~=2.0.3
 ```
 
 ## Regression Datasets
-回归数据集下载后无需额外处理，直接放入datasets_reg即可:
+No additional processing is needed for regression datasets. Simply place them in the datasets_reg folder:
 ```
 - datasets_clsa
   - CMAPSS
@@ -46,13 +48,13 @@ pandas~=2.0.3
 ```
 
 # Quick Start
-快速开始预训练，使用如下命令：
+To quickly start pre-training, use the following command:
 > python ./experiment.py --task_type=p --method=FEI
 
-预训练结束后，可在项目的`train/model_result/`内找到对应的预训练日志和结果，使用该目录作为预训练模型开展验证的方法如下：
+After pre-training, you can find the corresponding logs and results in the `train/model_result/` directory. To validate the pre-trained model, use the following command:
 > python ./experiment.py --model=./train/model_result/your_model_path --task_type=l --task=c --dataset=FDB --method=FEI
 
-可通过修改--task_type、--dataset等参数调整任务类型和测试数据集，使用如下命令获取有关运行参数的更多帮助：
+You can adjust the task type, dataset, and other parameters by modifying the arguments like --task_type and --dataset. For more help with run parameters, use:
 > python ./experiment.py -h
 
-更多代码细节将在论文录用后、代码可公开后描述
+Further code details will be described after the paper is accepted and the code is made publicly available.
