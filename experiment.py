@@ -5,7 +5,7 @@ import numpy as np
 import argparse
 
 
-def get_pretrain_config(target_model="FMEI"):
+def get_pretrain_config(target_model="FEI"):
     if target_model == "FEI":
         config = FreqMaskJEConfig()
 
