@@ -26,9 +26,9 @@ class PretrainConfig(BaseConfig):
         self.stride = 2
 
 
-class FreqMaskJEConfig(PretrainConfig):
+class FEIConfig(PretrainConfig):
     def __init__(self):
-        super(FreqMaskJEConfig, self).__init__()
+        super(FEIConfig, self).__init__()
         self.mask_pool_size = 1000
         self.reduce_mask_ratio = [0., 0.7]
         self.mask_aug_during_training = False

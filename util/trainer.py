@@ -8,7 +8,7 @@ import datasets_reg.bearing as reg_data_xjtu
 import os
 from config.configs import PretrainConfig, FineTuneConfig
 
-from models.pretrain_models import FreqMaskJECNNModel, PretrainModel, ClassifierModel, RegressionModel
+from models.pretrain_models import FEIModel, PretrainModel, ClassifierModel, RegressionModel
 from models.SimMTM import SimMTM
 from models.TimeDRL import TimeDRL
 from models.InfoTS import InfoTS
@@ -24,7 +24,7 @@ def build_pretrain_model(config: PretrainConfig,
     if target == AVAILABLE_TARGETS[0]:
         config.model_flag = build_flag("FEI",
                                        preTrain=config.pretrain_dataset)
-        model = FreqMaskJECNNModel(config)
+        model = FEIModel(config)
     elif target == AVAILABLE_TARGETS[1]:
         config.model_flag = build_flag("SimMTM",
                                        preTrain=config.pretrain_dataset)

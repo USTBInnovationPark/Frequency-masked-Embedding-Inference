@@ -7,7 +7,7 @@ import argparse
 
 def get_pretrain_config(target_model="FEI"):
     if target_model == "FEI":
-        config = FreqMaskJEConfig()
+        config = FEIConfig()
 
     elif target_model == "SimMTM":
         config = SimMTMConfig()

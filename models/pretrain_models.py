@@ -360,31 +360,26 @@ class RegressionModel(DownStreamModel):
         self.logger.info("MSE: {:.4f}\tMAE: {:.4f}\tMAPE: {:.4f}".format(mse, mae, mape))
 
 
-class FreqMaskJECNNModel(PretrainModel):
+class FEIModel(PretrainModel):
     def __init__(self,
-                 config: FreqMaskJEConfig):
-        super(FreqMaskJECNNModel, self).__init__(config)
-        self.global_encoder = copy.deepcopy(self.encoder)
-        self.global_encoder.requires_grad_(False)
-        self.global_input_embedding = copy.deepcopy(self.input_embedding)
-        self.global_input_embedding.requires_grad_(False)
+                 config: FEIConfig):
+        super(FEIModel, self).__init__(config)
+        self.mom_encoder = copy.deepcopy(self.encoder)
+        self.mom_encoder.requires_grad_(False)
+        self.mom_input_embedding = copy.deepcopy(self.input_embedding)
+        self.mom_input_embedding.requires_grad_(False)
         self.shrink_dim = self.hidden_dim // 2
         self.predictor_dim = self.shrink_dim // 2
-        if config.mask_embedding:
-            mask_len = config.pretrain_sample_length // 2 + 1 \
-                if config.mask_type != "temporal" else config.pretrain_sample_length
-            self.reduce_prompt_encoder = nn.Parameter(torch.randn(mask_len, self.shrink_dim))
-        else:
-            self.reduce_prompt_encoder = nn.Sequential(
-                nn.Linear(in_features=config.pretrain_sample_length // 2 + 1,
-                          out_features=self.shrink_dim, bias=False),
-            )
-        self.subspace_1 = nn.Sequential(
+        mask_len = config.pretrain_sample_length // 2 + 1 \
+            if config.mask_type != "temporal" else config.pretrain_sample_length
+        self.mask_encoder = nn.Parameter(torch.randn(mask_len, self.shrink_dim))
+
+        self.subspace_mapper = nn.Sequential(
             nn.Linear(in_features=self.hidden_dim, out_features=self.shrink_dim, bias=True),
         )
-        self.subspace_1_copy = copy.deepcopy(self.subspace_1)
-        self.subspace_1_copy.requires_grad_(False)
-        self.reduce_feature_predictor = nn.Sequential(
+        self.mom_subspace_mapper = copy.deepcopy(self.subspace_mapper)
+        self.mom_subspace_mapper.requires_grad_(False)
+        self.embedding_predictor = nn.Sequential(
             nn.Linear(in_features=self.shrink_dim, out_features=self.predictor_dim, bias=True),
             nn.GELU(),
             nn.Linear(in_features=self.predictor_dim, out_features=self.shrink_dim, bias=True),
@@ -396,15 +391,20 @@ class FreqMaskJECNNModel(PretrainModel):
         )
 
         self.momentum_iter = 0
+
+        # For faster training and reducing the memory exchange rate between GPU and RAM,
+        # all the mask will be generated before training started, the number of mask is determined by
+        # the Batch Size and mask_pool_size (hyperparam).
         self.reduce_mask_pool = None
         self.mask_pool_size = config.pretrain_batch_size * config.mask_pool_size
         self.mask_applicator = tool.apply_freq_reduce_mask \
             if config.mask_type != "temporal" else tool.apply_temporal_mask
+
         self.config = config
 
         self.to(config.device)
 
-        # ⬇ These variables are used to explore the behavior of the FMEI
+        # ⬇ These variables are used to explore the behavior of the FEI
         self.visual_samples = None
         self.masked_visual_samples = None
         self.visual_embeddings = None
@@ -445,70 +445,58 @@ class FreqMaskJECNNModel(PretrainModel):
         self.logger.info("Visual samples are Initialized.")
 
     def mask_encode(self, mask):
-        if self.config.mask_embedding:
-            masks = 1 - mask
-            reduce_mask_embed = (masks @ self.reduce_prompt_encoder) / (
-                    torch.sum(masks, dim=-1, keepdim=True) ** 0.5 + 1e-6)
-            # reduce_mask_embed = (masks @ self.reduce_prompt_encoder) / (
-            #         (self.config.pretrain_sample_length//2+1) ** 0.5 + 1e-6)
-        else:
-            if self.config.dense_mask:
-                masks = 2 * mask - 1
-                reduce_mask_embed = self.reduce_prompt_encoder(masks)  # (B, num, D_s), all index are transposed.
-            else:
-                masks = 1 - mask
-                reduce_mask_embed = \
-                    self.reduce_prompt_encoder(masks)
-        return reduce_mask_embed
+        masks = 1 - mask
+        mask_embed = (masks @ self.mask_encoder) / (
+                torch.sum(masks, dim=-1, keepdim=True) ** 0.5 + 1e-6
+        )
+        return mask_embed
 
     def forward(self, x):
-        # sample augmentation
-        B, L, C = x.shape[0], x.shape[1], x.shape[2]
+        B, L, C = x.shape[0], x.shape[1], x.shape[2]  # C==1
 
         # target sample
-        reduce_masks = self.select_masks(B, self.reduce_mask_pool)  # (B, num, F_L)
-        reduce_masks = reduce_masks.to(self.config.device)
-        reduce_targets = self.mask_applicator(x, reduce_masks)  # shape = (B, num, L, C)
+        masks = self.select_masks(B, self.reduce_mask_pool)  # (B, num, F_L)
+        masks = masks.to(self.config.device)
+        targets_series = self.mask_applicator(x, masks)  # shape = (B, num, L, C)
 
         # feature extraction
-        context_embed = self.feature_fusion(self.encoder(self.input_embedding(x)))  # (B, D)
-        sub_embed_1 = self.subspace_1(context_embed)
+        ori_embed = self.feature_fusion(self.encoder(self.input_embedding(x)))  # (B, D)
+        sub_embed = self.subspace_mapper(ori_embed)
 
-        reduce_mask_embed = self.mask_encode(reduce_masks)
+        mask_embed = self.mask_encode(masks)
 
-        reduce_targets_embed = []
-        reduce_pred_embed = []
+        targets_embed = []
+        pred_embed = []
         mask_pred = []
         for i in range(self.config.target_num):
-            # feature prediction process:
-            reduce_target_embed = self.subspace_1_copy(
-                self.feature_fusion(self.global_encoder(self.global_input_embedding(reduce_targets[:, i]))))
-            reduce_pred_ = self.reduce_feature_predictor((sub_embed_1 + reduce_mask_embed[:, i, :].detach()))  # (B, D)
-            reduce_pred_ = reduce_pred_.view(B, -1)
-            reduce_targets_embed.append(reduce_target_embed)
-            reduce_pred_embed.append(reduce_pred_)
-            # mask prediction process:
-            mask_pred_ = self.mask_predictor(reduce_target_embed - sub_embed_1.detach())
+            # embedding inference process:
+            target_embed = self.mom_subspace_mapper(
+                self.feature_fusion(self.mom_encoder(self.mom_input_embedding(targets_series[:, i]))))
+            pred_ = self.embedding_predictor((sub_embed + mask_embed[:, i, :].detach()))  # (B, D)
+            pred_ = pred_.view(B, -1)
+            targets_embed.append(target_embed)
+            pred_embed.append(pred_)
+            # mask inference process:
+            mask_pred_ = self.mask_predictor(target_embed - sub_embed.detach())
             mask_pred.append(mask_pred_)
 
-        return torch.stack(reduce_targets_embed, dim=0).detach(), torch.stack(reduce_pred_embed, dim=0), \
-            reduce_mask_embed, torch.stack(mask_pred, dim=1)
+        return torch.stack(targets_embed, dim=0).detach(), torch.stack(pred_embed, dim=0), \
+            mask_embed, torch.stack(mask_pred, dim=1)
 
     def iter_end(self, iteration):
-        # momentum update global encoder
+        # momentum update
         ipe = len(self.train_loader)  # iteration per epoch
         ema = self.config.exponential_moving_average_rate
         ema = ema + self.momentum_iter * (1 - ema) / (ipe * self.config.pretrain_epoch)
         self.momentum_iter += 1 if self.momentum_iter < ipe * self.config.pretrain_epoch + 1 else -self.momentum_iter
-        for (param_c, param_g) in zip(self.input_embedding.parameters(), self.global_input_embedding.parameters()):
+        for (param_c, param_g) in zip(self.input_embedding.parameters(), self.mom_input_embedding.parameters()):
             param_g.data.mul_(ema).add_((1 - ema) * param_c.detach().data)
-        for (param_c, param_g) in zip(self.encoder.parameters(), self.global_encoder.parameters()):
+        for (param_c, param_g) in zip(self.encoder.parameters(), self.mom_encoder.parameters()):
             param_g.data.mul_(ema).add_((1 - ema) * param_c.detach().data)
-        for (param_c, param_g) in zip(self.subspace_1.parameters(), self.subspace_1_copy.parameters()):
+        for (param_c, param_g) in zip(self.subspace_mapper.parameters(), self.mom_subspace_mapper.parameters()):
             param_g.data.mul_(ema).add_((1 - ema) * param_c.detach().data)
 
     def iter_end_before_opt(self, iteration):
-        # 记录梯度
         i_grad = 0  # input_embedding grad
         e_grad = 0  # encoder grad
         m_grad = 0  # mask embedding grad
@@ -520,15 +508,9 @@ class FreqMaskJECNNModel(PretrainModel):
             if param.grad is not None:
                 param_norm = param.grad.data.norm(2)
                 e_grad += param_norm.item() ** 2
-        if isinstance(self.reduce_prompt_encoder, nn.Parameter):
-            if self.reduce_prompt_encoder.grad is not None:
-                param_norm = self.reduce_prompt_encoder.grad.data.norm(2)
-                m_grad += param_norm.item() ** 2
-        else:
-            for param in self.reduce_prompt_encoder.parameters():
-                if param.grad is not None:
-                    param_norm = param.grad.data.norm(2)
-                    m_grad += param_norm.item() ** 2
+        if self.mask_encoder.grad is not None:
+            param_norm = self.mask_encoder.grad.data.norm(2)
+            m_grad += param_norm.item() ** 2
         self.i_grad.append(i_grad)
         self.e_grad.append(e_grad)
         self.m_grad.append(m_grad)
@@ -615,36 +597,23 @@ class FreqMaskJECNNModel(PretrainModel):
     def visual_sample_process(self):
         with torch.no_grad():
             self.visual_embeddings = self.feature_fusion(self.encoder(self.input_embedding(self.visual_samples)))
-            self.visual_embeddings_sub = self.subspace_1(self.visual_embeddings)
+            self.visual_embeddings_sub = self.subspace_mapper(self.visual_embeddings)
             self.visual_masked_embeddings = []
             self.visual_masked_embeddings_sub = []
             for i in range(10):
                 embeddings = self.feature_fusion(self.encoder(self.input_embedding(self.masked_visual_samples[:, i])))
                 self.visual_masked_embeddings.append(embeddings)
-                self.visual_masked_embeddings_sub.append(self.subspace_1(embeddings))
+                self.visual_masked_embeddings_sub.append(self.subspace_mapper(embeddings))
             self.visual_masked_embeddings = torch.stack(self.visual_masked_embeddings, dim=1)
             self.visual_masked_embeddings_sub = torch.stack(self.visual_masked_embeddings_sub, dim=1)
 
             # processing masks
-            if self.config.mask_embedding:
-                masks = 1 - self.mask_test
-                k = torch.sum(masks, dim=-1, keepdim=True)
-                mask_embed = (masks @ self.reduce_prompt_encoder) / (
-                        torch.sum(masks, dim=-1, keepdim=True) ** 0.5 + 1e-6
-                )
-            else:
-                if self.config.dense_mask:
-                    masks = 2 * self.mask_test - 1
-                    mask_embed = self.reduce_prompt_encoder(masks)  # (B, num, D), all index are transposed.
-                else:
-                    masks = 1 - self.mask_test
-                    mask_embed = self.reduce_prompt_encoder(masks)
-            self.mask_embeddings = mask_embed
+            self.mask_embeddings = self.mask_encode(self.mask_test)
 
             # prediction process
             self.pred_visual_masked_embeddings = []
             for i in range(10):
-                pred = self.reduce_feature_predictor((self.visual_embeddings_sub + self.mask_embeddings[:, i, :]))
+                pred = self.embedding_predictor((self.visual_embeddings_sub + self.mask_embeddings[:, i, :]))
                 self.pred_visual_masked_embeddings.append(pred)
 
             self.pred_visual_masked_embeddings = torch.stack(self.pred_visual_masked_embeddings, dim=1)
