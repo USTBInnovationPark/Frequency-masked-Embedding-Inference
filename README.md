@@ -68,6 +68,8 @@ The pre-train dataset SleepEEG and Classification datasets could be downloaded f
 </a>
 </p>
 
+More dataset details can be found in the [TF-C repository](https://github.com/mims-harvard/TFC-pretraining) and our Appendix.
+
 All classification datasets, **except for the 128 UCR dataset**, should follow the structure of train.pt/test.pt/val.pt, where each .pt file contains a dictionary with keys "samples" and "labels," corresponding to the sample and label data. See the TF-C dataset structure for details.
 
 After downloading, place the datasets in the datasets_clsa folder. For example, the correct directory structure for the Gesture dataset should be as follows:
