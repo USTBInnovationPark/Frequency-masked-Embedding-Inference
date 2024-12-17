@@ -1,10 +1,17 @@
+# Frequency-Masked Embedding Inference
 
-# Notice!
-**This  repository has been uploaded to our team's private GitHub repository and is timestamped as proof. It is provided solely for AAAI-25 reviewers to view and debug. Any other use is prohibited. Our team reserves all rights to the code and related work until it is publicly published and open-sourced.**
+<p align="center">
+  <img src="https://img.shields.io/badge/Appendix-PDF-blue?link=https://github.com/USTBInnovationPark/Frequency-masked-Embedding-Inference/blob/main/Appendix.pdf" alt="badge">
+</p>
 
-# **Frequency-Masked Embedding Inference: A Non-Contrastive Approach for Time Series Representation Learning**
-This repository contains the official code for Frequency-masked Embedding Inference (FEI). 
-This version corresponds to the initial submission of the paper to AAAI-2025.
+This repository contains the official code for the AAAI-25 paper:
+
+*Frequency-masked Embedding Inference: A Non-Contrastive Approach for Time Series Representation Learning*
+
+The proceeding version is being processed and will be released soon. The final reference version will be added here once available.
+
+FEI is a time series self-supervised pretraining framework based on the Joint-Embedding Predictive Architecture (JEPA) concept, without any explicit contrastive structure.
+![overall](.asset/img.png)
 
 # Repository Structure
 ```
