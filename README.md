@@ -15,7 +15,7 @@ This repository contains the official code for the AAAI-25 paper:
 
 The proceeding version is being processed and will be released soon. The final reference version will be added here once available.
 
-FEI is a time series self-supervised pretraining framework based on the Joint-Embedding Predictive Architecture (JEPA) concept, without any explicit contrastive structure.
+FEI is a time series self-supervised pretraining framework based on the Joint-Embedding Predictive Architecture (JEPA) concept without any explicit contrastive structure.
 ![overall](.asset/img.png)
 
 # Repository Structure
@@ -24,8 +24,8 @@ FEI is a time series self-supervised pretraining framework based on the Joint-Em
 - datasets_clsa/         Classification dataset construction
 - datasets_reg/          Regression dataset construction
 - models/                Contains Baseline implementations and FEI architecture code
-- train/                 Base class for all training code, as well as saving training logs and results
-- util/                  All utility methods, including the frequency masking code for FEI
+- train/                 Base class for all training code as well as saving training logs and results
+- util/                  All utility methods including the frequency masking code for FEI
 - experiments.py         Entry point for running training and testing
 ```
 
@@ -70,9 +70,9 @@ The pre-train dataset SleepEEG and Classification datasets could be downloaded f
 
 More dataset details can be found in the [TF-C repository](https://github.com/mims-harvard/TFC-pretraining) and our Appendix.
 
-All classification datasets, **except for the 128 UCR dataset**, should follow the structure of train.pt/test.pt/val.pt, where each .pt file contains a dictionary with keys "samples" and "labels," corresponding to the sample and label data. See the TF-C dataset structure for details.
+All classification datasets **except for the 128 UCR dataset** should follow the structure of train.pt/test.pt/val.pt where each .pt file contains a dictionary with keys "samples" and "labels," corresponding to the sample and label data. See the TF-C dataset structure for details.
 
-After downloading, place the datasets in the datasets_clsa folder. For example, the correct directory structure for the Gesture dataset should be as follows:
+After downloading place the datasets in the datasets_clsa folder. For example the correct directory structure for the Gesture dataset should be as follows:
 
 ```
 - datasets_clsa
@@ -82,7 +82,7 @@ After downloading, place the datasets in the datasets_clsa folder. For example, 
     - val.pt
 ```
 
-For the 128 UCR dataset, the directory structure should be as follows:
+For the 128 UCR dataset the directory structure should be as follows:
 ```
 - datasets_clsa
   - UCR
@@ -119,13 +119,27 @@ No additional processing is needed for regression datasets. Simply place them in
 ```
 
 # Quick Start
-To quickly start pre-training, use the following command:
+To quickly start pre-training use the following command:
 > python ./experiment.py --task_type=p --method=FEI
 
-After pre-training, you can find the corresponding logs and results in the `train/model_result/` directory. To validate the pre-trained model, use the following command:
+After pre-training you can find the corresponding logs and results in the `train/model_result/` directory. To validate the pre-trained model use the following command:
 > python ./experiment.py --model=./train/model_result/your_model_path --task_type=l --task=c --dataset=FDB --method=FEI
 
-You can adjust the task type, dataset, and other parameters by modifying the arguments like --task_type and --dataset. For more help with run parameters, use:
+You can adjust the task type dataset and other parameters by modifying the arguments like --task_type and --dataset. For more help with run parameters use:
 > python ./experiment.py -h
 
 Further code details will be described soon.
+
+# Acknowledgement
+We would like to express our sincere gratitude to all the open-source authors and contributors of the public datasets involved in this project, including but not limited to (in no particular order):
+
+- SleepEEG Dataset: Kemp Bob, Zwinderman Aeilko H, Tuk Bert, Kamphuisen Hilbert AC, Oberye Josefien JL
+- 128 UCR Dataset: Dau Hoang Anh, Keogh Eamonn, Kamgar Kaveh, Yeh Chin-Chia Michael, Zhu Yan, Gharghabi Shaghayegh, Ratanamahatana Chotirat Ann, Yanping, Hu Bing, Begum Nurjahan, Bagnall Anthony, Mueen Abdullah, Batista Gustavo, Hexagon-ML
+Website: https://www.cs.ucr.edu/~eamonn/time_series_data_2018/
+- Gesture Dataset: Liu Jiayang, Zhong Lin, Wickramasuriya Jehan, Vasudevan Venu
+- FD-B Dataset: Lessmeier Christian, Kimotho James Kuria, Zimmer Detmar, Sextro Walter
+- EMG Dataset: Goldberger Ary L, Amaral Luis AN, Glass Leon, Hausdorff Jeffrey M, Ivanov Plamen Ch, Mark Roger G, Mietus Joseph E, Moody George B, Peng Chung-Kang, Stanley H Eugene
+- EPI Dataset: Andrzejak Ralph G, Lehnertz Klaus, Mormann Florian, Rieke Christoph, David Peter, Elger Christian E
+- HAR Dataset: Anguita Davide, Ghio Aless,ro, Oneto Luca, Parra Xavier, Reyes-Ortiz Jorge Luis, and others
+- C-MAPSS Dataset: Saxena Abhinav, Goebel Kai, Simon Don, Eklund Neil
+- Bearing Dataset: Wang Biao, Lei Yaguo, Li Naipeng, Li Ningbo
