@@ -4,7 +4,7 @@
 <a href="https://github.com/USTBInnovationPark/Frequency-masked-Embedding-Inference/blob/main/Appendix.pdf">
     <img src="https://img.shields.io/badge/PDF-Appendix-blue?link=https://github.com/USTBInnovationPark/Frequency-masked-Embedding-Inference/blob/main/Appendix.pdf" alt="badge">
 </a>
-<a href="">
+<a href="https://ojs.aaai.org/index.php/AAAI/article/view/33828">
     <img src="https://img.shields.io/badge/PDF-Original_Paper-red" alt="badge">
 </a>
 </p>
