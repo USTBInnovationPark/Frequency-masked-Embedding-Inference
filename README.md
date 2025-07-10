@@ -130,6 +130,20 @@ You can adjust the task type dataset and other parameters by modifying the argum
 
 Further code details will be described soon.
 
+# Citation
+If you find our work helpful, please consider citing our paper:
+```
+@inproceedings{FEI2025,
+  title={Frequency-Masked Embedding Inference: A Non-Contrastive Approach for Time Series Representation Learning},
+  author={Fu, En and Hu, Yanyan},
+  booktitle={Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume={39},
+  number={16},
+  pages={16639--16647},
+  year={2025}
+}
+```
+
 # Acknowledgement
 We would like to express our sincere gratitude to all the open-source authors and contributors of the public datasets involved in this project, including but not limited to (in no particular order):
 
