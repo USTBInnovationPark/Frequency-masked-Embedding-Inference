@@ -37,16 +37,16 @@ if __name__ == '__main__':
                         help='\'p\'(pre-training) or \'f\'(fine-tuning) or \'l\'(linear evaluation)')
     parser.add_argument('--task', default='c', type=str,
                         help='\'c\'(classification) or \'r\'(regression). '
-                             'This is only used when \'--task=f\' or \'--task=l\'.')
+                             'This is only used when \'--task_type=f\' or \'--task_type=l\'.')
     parser.add_argument('--model', default=None, type=str,
-                        help='The path to the pre-trained model. This is only used when \'--task=f\' or \'--task=l\'. '
+                        help='The path to the pre-trained model. This is only used when \'--task_type=f\' or \'--task_type=l\'. '
                              'If not provided, the model will be fine-tuned with random initialization.')
     parser.add_argument('--dataset', default='SLE', type=str,
                         help='Pretrain dataset: SLE (SleepEEG).\n '
                              'Classification dataset: GES/FDB/EMG/EPI/HAR/UCR.\n'
                              'Regression dataset: FD001/FD002/FD003/FD004/OPA/OPB/OPC')
     parser.add_argument('--method', default='FEI', type=str,
-                        help='\'FEI\'/\'SimMTM\'/\'TimeDRL\'/\'InfoTS\'. This is only used when \'--task=p\'. ')
+                        help='\'FEI\'/\'SimMTM\'/\'TimeDRL\'/\'InfoTS\'. This is only used when \'--task_type=p\'. ')
     parser.add_argument('--device', default='cuda:0', type=str,
                         help='\'cuda:n\'/\'cpu\'')
     args, unknown = parser.parse_known_args()
